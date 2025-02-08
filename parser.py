@@ -182,3 +182,13 @@ def diff_saves(filename_a, filename_b):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
 
+"""
+TODO:
+
+- Double check that patching works now, and that I can modify specific bytes and update the checksums without changing anything else
+- Rewrite the ingestion methods to just take in the buffer instead of a file descriptor
+- Extend SaveGameSection for specific section i.e. "Team/items"
+- Implement the remaining blocks such as Hall of Fame, and then update SaveGame.to_bytes() so it generates a full valid save file
+- Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
+"""
+
