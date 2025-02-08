@@ -192,7 +192,6 @@ fd.close()
 """
 TODO:
 
-- Rewrite the ingestion methods to just take in the buffer instead of a file descriptor
 - Extend SaveGameSection for specific section i.e. "Team/items"
 - Implement the remaining blocks such as Hall of Fame, and then update SaveGame.to_bytes() so it generates a full valid save file
 - Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
