@@ -11,6 +11,8 @@ offsets = {
 	"section_signature": 0xFF8,
 	"section_save_index": 0xFFC,
 	"hall_of_fame": 0x1C000,
+	"mystery_gift": 0x1E000,
+	"recorded_battle": 0x1F000
 }
 
 sizes = {
@@ -21,7 +23,9 @@ sizes = {
 	"section_checksum": 2,
 	"section_signature": 4,
 	"section_save_index": 4,
-	"hall_of_fame": 8192
+	"hall_of_fame": 8192,
+	"mystery_gift": 4096,
+	"recorded_battle": 4096
 }
 
 section_names = {
@@ -64,10 +68,13 @@ class SaveGame:
 	def __init__(self, filename):
 		fd = open(filename, "rb")
 		self.buffer = fd.read()
+		fd.close()
+		
 		self.a = SaveGameBlock(self.buffer, True)
 		self.b = SaveGameBlock(self.buffer, False)
 		self.hof = HallOfFameBlock(self.buffer)
-		fd.close()
+		self.mystery_gift = MysteryGiftBlock(self.buffer)
+		self.recorded_battle = RecordedBattleBlock(self.buffer)
 		
 	def get_current_save(self):
 		# Block A and B are saved to alternately as a backup system. 
@@ -84,6 +91,8 @@ class SaveGame:
 		new_buffer[offsets["save_game_a"]:offsets["save_game_a"]+sizes["save_game_block"]] = self.a.to_bytes()
 		new_buffer[offsets["save_game_b"]:offsets["save_game_b"]+sizes["save_game_block"]] = self.b.to_bytes()
 		new_buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]] = self.hof.to_bytes()
+		new_buffer[offsets["mystery_gift"]:offsets["mystery_gift"]+sizes["mystery_gift"]] = self.mystery_gift.to_bytes()
+		new_buffer[offsets["recorded_battle"]:offsets["recorded_battle"]+sizes["recorded_battle"]] = self.recorded_battle.to_bytes()
 		return new_buffer
 
 class SaveGameBlock:
@@ -179,6 +188,27 @@ class HallOfFameBlock:
 		new_buffer = bytearray(self.buffer)
 		# TODO actually serialize the data
 		return new_buffer
+
+class MysteryGiftBlock:
+	def __init__(self, buffer):
+		self.buffer = buffer[offsets["mystery_gift"]:offsets["mystery_gift"]+sizes["mystery_gift"]]
+		# TODO actually parse the data
+	
+	def to_bytes(self):
+		new_buffer = bytearray(self.buffer)
+		# TODO actually serialize the data
+		return new_buffer	
+		
+class RecordedBattleBlock:
+	def __init__(self, buffer):
+		self.buffer = buffer[offsets["recorded_battle"]:offsets["recorded_battle"]+sizes["recorded_battle"]]
+		# TODO actually parse the data
+	
+	def to_bytes(self):
+		new_buffer = bytearray(self.buffer)
+		# TODO actually serialize the data
+		return new_buffer		
+
 
 # FUNCTIONS
 
