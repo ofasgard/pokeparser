@@ -228,9 +228,11 @@ def diff_saves(filename_a, filename_b):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
 
+
 """
 TODO:
 
+- When converting SaveGame to bytes, ensure you use the original buffer as a starting point
 - Extend SaveGameSection for specific sections i.e. "Team/items"
 - Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
 """
