@@ -61,8 +61,9 @@ section_validation_bytes = {
 class SaveGame:
 	def __init__(self, filename):
 		fd = open(filename, "rb")
-		self.a = SaveGameBlock(fd, True)
-		self.b = SaveGameBlock(fd, False)
+		self.buffer = fd.read()
+		self.a = SaveGameBlock(self.buffer, True)
+		self.b = SaveGameBlock(self.buffer, False)
 		fd.close()
 		
 	def get_current_save(self):
@@ -82,12 +83,11 @@ class SaveGame:
 		return new_buffer
 
 class SaveGameBlock:
-	def __init__(self, save_fd, blockA):
+	def __init__(self, buffer, blockA):
 		self.name = "A" if blockA else "B"
 	
 		offset = offsets["save_game_a"] if blockA else offsets["save_game_b"]
-		save_fd.seek(offset, 0)
-		self.buffer = save_fd.read(sizes["save_game_block"])
+		self.buffer = buffer[offset:offset+sizes["save_game_block"]]
 
 		self.sections = []
 		while len(self.sections) < 14:
@@ -181,6 +181,13 @@ def diff_saves(filename_a, filename_b):
 			for byte in range(len(a_section.data)):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
+
+save = SaveGame("test.sav")
+save.get_current_save().get_section_by_id(3).update_checksum()
+
+fd = open("test.sav", "rb+")
+fd.write(save.to_bytes())
+fd.close()
 
 """
 TODO:
