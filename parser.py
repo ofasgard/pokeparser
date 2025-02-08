@@ -85,7 +85,7 @@ class SaveGame:
 		return self.a if a>b else self.b
 		
 	def to_bytes(self):
-		new_buffer = bytearray(sizes["save_game_block"] * 2 + sizes["hall_of_fame"])
+		new_buffer = bytearray(self.buffer)
 		new_buffer[offsets["save_game_a"]:offsets["save_game_a"]+sizes["save_game_block"]] = self.a.to_bytes()
 		new_buffer[offsets["save_game_b"]:offsets["save_game_b"]+sizes["save_game_block"]] = self.b.to_bytes()
 		new_buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]] = self.hof.to_bytes()
@@ -228,11 +228,9 @@ def diff_saves(filename_a, filename_b):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
 
-
 """
 TODO:
 
-- When converting SaveGame to bytes, ensure you use the original buffer as a starting point
 - Extend SaveGameSection for specific sections i.e. "Team/items"
 - Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
 """
