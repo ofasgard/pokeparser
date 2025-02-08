@@ -85,8 +85,6 @@ class SaveGame:
 		return self.a if a>b else self.b
 		
 	def to_bytes(self):
-		# TODO - implement Mystery Gift and Recorded Battle blocks
-		# until that's done, this will return an incomplete save file (suitable for patching only)
 		new_buffer = bytearray(sizes["save_game_block"] * 2 + sizes["hall_of_fame"])
 		new_buffer[offsets["save_game_a"]:offsets["save_game_a"]+sizes["save_game_block"]] = self.a.to_bytes()
 		new_buffer[offsets["save_game_b"]:offsets["save_game_b"]+sizes["save_game_block"]] = self.b.to_bytes()
@@ -94,6 +92,10 @@ class SaveGame:
 		new_buffer[offsets["mystery_gift"]:offsets["mystery_gift"]+sizes["mystery_gift"]] = self.mystery_gift.to_bytes()
 		new_buffer[offsets["recorded_battle"]:offsets["recorded_battle"]+sizes["recorded_battle"]] = self.recorded_battle.to_bytes()
 		return new_buffer
+	def write(self, filename):
+		fd = open(filename, "wb")
+		fd.write(self.to_bytes())
+		fd.close()
 
 class SaveGameBlock:
 	def __init__(self, buffer, blockA):
@@ -226,25 +228,10 @@ def diff_saves(filename_a, filename_b):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
 
-
-save = SaveGame("test.sav")
-
-buf = bytearray(save.get_current_save().get_section_by_id(3).data)
-buf[0x100] = 0xde
-buf[0x101] = 0xad
-save.get_current_save().get_section_by_id(3).data = buf
-
-save.get_current_save().get_section_by_id(3).update_checksum()
-
-fd = open("test.sav", "rb+")
-fd.write(save.to_bytes())
-fd.close()
-
 """
 TODO:
 
-- Extend SaveGameSection for specific section i.e. "Team/items"
-- Implement the remaining blocks such as Hall of Fame, and then update SaveGame.to_bytes() so it generates a full valid save file
+- Extend SaveGameSection for specific sections i.e. "Team/items"
 - Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
 """
 
