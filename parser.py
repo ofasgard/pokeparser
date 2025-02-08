@@ -10,6 +10,7 @@ offsets = {
 	"section_checksum": 0xFF6,
 	"section_signature": 0xFF8,
 	"section_save_index": 0xFFC,
+	"hall_of_fame": 0x1C000,
 }
 
 sizes = {
@@ -20,6 +21,7 @@ sizes = {
 	"section_checksum": 2,
 	"section_signature": 4,
 	"section_save_index": 4,
+	"hall_of_fame": 8192
 }
 
 section_names = {
@@ -64,6 +66,7 @@ class SaveGame:
 		self.buffer = fd.read()
 		self.a = SaveGameBlock(self.buffer, True)
 		self.b = SaveGameBlock(self.buffer, False)
+		self.hof = HallOfFameBlock(self.buffer)
 		fd.close()
 		
 	def get_current_save(self):
@@ -75,11 +78,12 @@ class SaveGame:
 		return self.a if a>b else self.b
 		
 	def to_bytes(self):
-		# TODO - implement Hall of Fame, Mystery Gift and Recorded Battle blocks
+		# TODO - implement Mystery Gift and Recorded Battle blocks
 		# until that's done, this will return an incomplete save file (suitable for patching only)
-		new_buffer = bytearray(sizes["save_game_block"] * 2)
+		new_buffer = bytearray(sizes["save_game_block"] * 2 + sizes["hall_of_fame"])
 		new_buffer[offsets["save_game_a"]:offsets["save_game_a"]+sizes["save_game_block"]] = self.a.to_bytes()
 		new_buffer[offsets["save_game_b"]:offsets["save_game_b"]+sizes["save_game_block"]] = self.b.to_bytes()
+		new_buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]] = self.hof.to_bytes()
 		return new_buffer
 
 class SaveGameBlock:
@@ -166,6 +170,16 @@ class SaveGameSection:
 		new_buffer[offsets["section_save_index"]:offsets["section_save_index"]+sizes["section_save_index"]] = self.save_index
 		return new_buffer
 
+class HallOfFameBlock:
+	def __init__(self, buffer):
+		self.buffer = buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]]
+		# TODO actually parse the data
+	
+	def to_bytes(self):
+		new_buffer = bytearray(self.buffer)
+		# TODO actually serialize the data
+		return new_buffer
+
 # FUNCTIONS
 
 def diff_saves(filename_a, filename_b):
@@ -182,7 +196,14 @@ def diff_saves(filename_a, filename_b):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
 
+
 save = SaveGame("test.sav")
+
+buf = bytearray(save.get_current_save().get_section_by_id(3).data)
+buf[0x100] = 0xde
+buf[0x101] = 0xad
+save.get_current_save().get_section_by_id(3).data = buf
+
 save.get_current_save().get_section_by_id(3).update_checksum()
 
 fd = open("test.sav", "rb+")
