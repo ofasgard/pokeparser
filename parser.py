@@ -149,10 +149,10 @@ class SaveGameSection:
 		checksum_bytes = checksum.value.to_bytes(4, "big")
 		upper = int.from_bytes(checksum_bytes[0:2], "big")
 		lower = int.from_bytes(checksum_bytes[2:4], "big")
-		checksum = upper + lower
+		checksum = ctypes.c_uint16(upper + lower)
 		
 		# This new 16-bit value is the checksum.
-		return checksum.to_bytes(2, "little")
+		return checksum.value.to_bytes(2, "little")
 
 	def update_checksum(self):
 		self.checksum = self.generate_checksum()
@@ -185,7 +185,6 @@ def diff_saves(filename_a, filename_b):
 """
 TODO:
 
-- Double check that patching works now, and that I can modify specific bytes and update the checksums without changing anything else
 - Rewrite the ingestion methods to just take in the buffer instead of a file descriptor
 - Extend SaveGameSection for specific section i.e. "Team/items"
 - Implement the remaining blocks such as Hall of Fame, and then update SaveGame.to_bytes() so it generates a full valid save file
