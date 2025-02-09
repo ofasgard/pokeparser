@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
 """
-In Pokemon Unbound, an NPC in Frozen Heights will reset your real-time clock if it gets desynced. However, they will only ever do this once per save. This script patches your save file so that they'll reset the RTC for you again.
+In Pokemon Unbound, an NPC in Frozen Heights will reset your real-time clock if it gets desynced. 
+However, they will only ever do this once per save. This script patches your save file so that they'll reset the RTC for you again.
+Tested on version 2.1.1.1 of Pokemon Unbound.
 """
 
 import sys
