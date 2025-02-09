@@ -226,7 +226,8 @@ class HallOfFamePokemon:
 	def get_species(self):
 		return self.pokedata[0]
 	def get_level(self):
-		return self.pokedata[1] # TODO wrong, about twice as high as it should be
+		# Only the lowest 7 bits are used.	
+		return self.pokedata[1] >> 1
 	def get_nickname(self):
 		# TODO render as ASCII
 		raise NotImplementedError
