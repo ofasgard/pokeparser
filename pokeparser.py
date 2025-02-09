@@ -195,18 +195,18 @@ class HallOfFameBlock:
 	def __init__(self, buffer):
 		self.buffer = buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]]
 		
-		self.records = []
+		self.pokemon = []
 		for i in range(300):
 			# 50 records, each of which contains 6 pokemon
 			offset = i * sizes["hof_pokemon"]
 			pokemon_buffer = self.buffer[offset:offset+sizes["hof_pokemon"]]
-			self.records.append(HallOfFamePokemon(pokemon_buffer))
-	
+			self.pokemon.append(HallOfFamePokemon(pokemon_buffer))
+
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
 		for i in range(300):
 			offset = i * sizes["hof_pokemon"]
-			new_buffer[offset:offset+sizes["hof_pokemon"]] = self.records[i].to_bytes()
+			new_buffer[offset:offset+sizes["hof_pokemon"]] = self.pokemon[i].to_bytes()
 		return new_buffer
 		
 class HallOfFamePokemon:
@@ -217,7 +217,19 @@ class HallOfFamePokemon:
 		self.pokedata = pokemon_buffer[offsets["hof_pokedata"]:offsets["hof_pokedata"]+sizes["hof_pokedata"]]
 		self.nickname = pokemon_buffer[offsets["hof_nickname"]:offsets["hof_nickname"]+sizes["hof_nickname"]]
 
-	# TODO add methods to parse and interrogate these fields (i.e. render nickname as ASCII text)
+	def get_trainer_id(self):
+		return int.from_bytes(self.trainer_id[0:2], "little")
+	def get_secret_id(self):
+		return int.from_bytes(self.trainer_id[2:4], "little")
+	def get_personality(self):
+		return int.from_bytes(self.personality, "little")
+	def get_species(self):
+		return self.pokedata[0]
+	def get_level(self):
+		return self.pokedata[1] # TODO wrong, about twice as high as it should be
+	def get_nickname(self):
+		# TODO render as ASCII
+		raise NotImplementedError
 		
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
