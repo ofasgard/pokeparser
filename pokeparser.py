@@ -11,6 +11,10 @@ offsets = {
 	"section_signature": 0xFF8,
 	"section_save_index": 0xFFC,
 	"hall_of_fame": 0x1C000,
+	"hof_trainer_id": 0x0,
+	"hof_personality": 0x4,
+	"hof_pokedata": 0x8,
+	"hof_nickname": 0xA,
 	"mystery_gift": 0x1E000,
 	"recorded_battle": 0x1F000
 }
@@ -24,6 +28,11 @@ sizes = {
 	"section_signature": 4,
 	"section_save_index": 4,
 	"hall_of_fame": 8192,
+	"hof_pokemon": 20,
+	"hof_trainer_id": 4,
+	"hof_personality": 4,
+	"hof_pokedata": 2,
+	"hof_nickname": 10,
 	"mystery_gift": 4096,
 	"recorded_battle": 4096
 }
@@ -128,6 +137,7 @@ class SaveGameBlock:
 		return new_buffer
 
 class SaveGameSection:
+	# TODO: extend with support for specific section types, i.e. trainer data
 	def __init__(self, section_buffer):
 		self.buffer = section_buffer
 		self.data = section_buffer[offsets["section_data"]:offsets["section_data"]+sizes["section_data"]]
@@ -184,31 +194,54 @@ class SaveGameSection:
 class HallOfFameBlock:
 	def __init__(self, buffer):
 		self.buffer = buffer[offsets["hall_of_fame"]:offsets["hall_of_fame"]+sizes["hall_of_fame"]]
-		# TODO actually parse the data
+		
+		self.records = []
+		for i in range(300):
+			# 50 records, each of which contains 6 pokemon
+			offset = i * sizes["hof_pokemon"]
+			pokemon_buffer = self.buffer[offset:offset+sizes["hof_pokemon"]]
+			self.records.append(HallOfFamePokemon(pokemon_buffer))
 	
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
-		# TODO actually serialize the data
+		for i in range(300):
+			offset = i * sizes["hof_pokemon"]
+			new_buffer[offset:offset+sizes["hof_pokemon"]] = self.records[i].to_bytes()
 		return new_buffer
+		
+class HallOfFamePokemon:
+	def __init__(self, pokemon_buffer):
+		self.buffer = pokemon_buffer
+		self.trainer_id = pokemon_buffer[offsets["hof_trainer_id"]:offsets["hof_trainer_id"]+sizes["hof_trainer_id"]]
+		self.personality = pokemon_buffer[offsets["hof_personality"]:offsets["hof_personality"]+sizes["hof_personality"]]
+		self.pokedata = pokemon_buffer[offsets["hof_pokedata"]:offsets["hof_pokedata"]+sizes["hof_pokedata"]]
+		self.nickname = pokemon_buffer[offsets["hof_nickname"]:offsets["hof_nickname"]+sizes["hof_nickname"]]
+
+	# TODO add methods to parse and interrogate these fields (i.e. render nickname as ASCII text)
+		
+	def to_bytes(self):
+		new_buffer = bytearray(self.buffer)
+		new_buffer[offsets["hof_trainer_id"]:offsets["hof_trainer_id"]+sizes["hof_trainer_id"]] = self.trainer_id
+		new_buffer[offsets["hof_personality"]:offsets["hof_personality"]+sizes["hof_personality"]] = self.personality
+		new_buffer[offsets["hof_pokedata"]:offsets["hof_pokedata"]+sizes["hof_pokedata"]] = self.pokedata
+		new_buffer[offsets["hof_nickname"]:offsets["hof_nickname"]+sizes["hof_nickname"]] = self.nickname
+		return new_buffer
+		
 
 class MysteryGiftBlock:
 	def __init__(self, buffer):
 		self.buffer = buffer[offsets["mystery_gift"]:offsets["mystery_gift"]+sizes["mystery_gift"]]
-		# TODO actually parse the data
 	
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
-		# TODO actually serialize the data
 		return new_buffer	
 		
 class RecordedBattleBlock:
 	def __init__(self, buffer):
 		self.buffer = buffer[offsets["recorded_battle"]:offsets["recorded_battle"]+sizes["recorded_battle"]]
-		# TODO actually parse the data
 	
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
-		# TODO actually serialize the data
 		return new_buffer		
 
 
@@ -227,12 +260,4 @@ def diff_saves(filename_a, filename_b):
 			for byte in range(len(a_section.data)):
 				if a_section.data[byte] != b_section.data[byte]:
 					print("\t{}: {} => {}".format(hex(byte), a_section.data[byte], b_section.data[byte]))
-
-"""
-TODO:
-
-- Extend SaveGameSection for specific sections i.e. "Team/items"
-- Expand the stubs for later blocks, like Hall of Fame
-- Write code for quickly and easily patching savegames, so that I can continue reverse engineering unbound
-"""
 
