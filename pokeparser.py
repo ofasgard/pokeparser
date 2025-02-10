@@ -139,13 +139,18 @@ class SaveGameBlock:
 
 class SaveGameSection:
 	# TODO: extend with support for specific section types, i.e. trainer data
-	def __init__(self, section_buffer):
+	def __init__(self, section_buffer, guess_checksum=False):
 		self.buffer = section_buffer
 		self.data = section_buffer[offsets["section_data"]:offsets["section_data"]+sizes["section_data"]]
 		self.id = section_buffer[offsets["section_id"]:offsets["section_id"]+sizes["section_id"]]
 		self.checksum = section_buffer[offsets["section_checksum"]:offsets["section_checksum"]+sizes["section_checksum"]]
 		self.signature = section_buffer[offsets["section_signature"]:offsets["section_signature"]+sizes["section_signature"]]
 		self.save_index = section_buffer[offsets["section_save_index"]:offsets["section_save_index"]+sizes["section_save_index"]]
+		
+		# Different section types use various numbers of bytes to validate the checksum.
+		self.validation_bytes = section_validation_bytes[self.get_id()]
+		if guess_checksum:
+			self.guess_validation_bytes()
 
 	def get_id(self):
 		return int.from_bytes(self.id, "little")
@@ -159,13 +164,10 @@ class SaveGameSection:
 		return int.from_bytes(self.save_index, "little")
 		
 	def generate_checksum(self):
-		# Different section types use various numbers of bytes to validate the checksum.
-		validation_bytes = section_validation_bytes[self.get_id()]
-		
 		# Read 4 bytes at a time as 32-bit words and add them to the checksum variable.
 		checksum = ctypes.c_uint32(0)
 		current_offset = 0
-		while current_offset < validation_bytes:
+		while current_offset < self.validation_bytes:
 			current_word = self.data[current_offset:current_offset+4]
 			current_value = int.from_bytes(current_word, "little")
 			checksum = ctypes.c_uint32(checksum.value + current_value)
@@ -182,6 +184,20 @@ class SaveGameSection:
 
 	def update_checksum(self):
 		self.checksum = self.generate_checksum()
+		
+	def guess_validation_bytes(self):
+		# Experimental. Some ROMHacks change the number of bytes used to validate a section from the defaults.
+		# This method tries to figure out what number of bytes are required to produce the pre-existing checksum.
+		old_validation_bytes = self.validation_bytes
+		
+		for i in range(sizes["section_data"], 0, -4):
+			self.validation_bytes = i
+			checksum = self.generate_checksum()
+			if checksum == self.checksum:
+				return True
+		
+		self.validation_bytes = section_validation_bytes[self.get_id()]
+		return False
 		
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
@@ -229,7 +245,7 @@ class HallOfFamePokemon:
 		# Note that this returns the internal index number, NOT necessarily the national pokedex number.
 		# See https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_index_number_in_Generation_III
 		pokedata = int.from_bytes(self.pokedata, "little")
-		return pokedata & ((2**9) - 1)
+		return pokedata & 0x1FF
 	def get_level(self):
 		# Only the highest 7 bits are used (little endian byte order).
 		pokedata = int.from_bytes(self.pokedata, "little")
