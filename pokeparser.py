@@ -225,14 +225,16 @@ class HallOfFamePokemon:
 	def get_personality(self):
 		return int.from_bytes(self.personality, "little")
 	def get_species(self):
-		# Only the highest 9 bits are used (little endian byte order).
+		# Only the lowest 9 bits are used (little endian byte order).
 		# Note that this returns the internal index number, NOT necessarily the national pokedex number.
 		# See https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_index_number_in_Generation_III
 		pokedata = int.from_bytes(self.pokedata, "little")
+		print(pokedata)
 		return pokedata & ((2**9) - 1)
 	def get_level(self):
-		# Only the lowest 7 bits are used.	
-		return self.pokedata[1] >> 1
+		# Only the highest 7 bits are used (little endian byte order).
+		pokedata = int.from_bytes(self.pokedata, "little")
+		return pokedata >> 9
 	def get_nickname(self):
 		return poketext.decode_western(self.nickname)
 		
