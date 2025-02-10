@@ -1,4 +1,5 @@
 import sys, math, ctypes
+import poketext
 
 # CONSTANTS
 
@@ -224,13 +225,12 @@ class HallOfFamePokemon:
 	def get_personality(self):
 		return int.from_bytes(self.personality, "little")
 	def get_species(self):
-		return self.pokedata[0]
+		return self.pokedata[0] # not correct for high values like salamence
 	def get_level(self):
 		# Only the lowest 7 bits are used.	
 		return self.pokedata[1] >> 1
 	def get_nickname(self):
-		# TODO render as ASCII
-		raise NotImplementedError
+		return poketext.decode_western(self.nickname)
 		
 	def to_bytes(self):
 		new_buffer = bytearray(self.buffer)
