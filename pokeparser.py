@@ -225,7 +225,8 @@ class HallOfFamePokemon:
 	def get_personality(self):
 		return int.from_bytes(self.personality, "little")
 	def get_species(self):
-		return self.pokedata[0] # not correct for high values like salamence
+		# TODO not correct for species # above 256, presumably because top 9 bits should be used
+		return self.pokedata[0]
 	def get_level(self):
 		# Only the lowest 7 bits are used.	
 		return self.pokedata[1] >> 1
